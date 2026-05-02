@@ -8,12 +8,11 @@ interface Props {
   userName: string;
   userAvatar: string;
   setView: (v: ViewMode) => void;
-  loadSamples: () => void;
   resetAll: () => void;
   signOut: () => void;
 }
 
-export default function Dashboard({ cards, studyStreak, userName, userAvatar, setView, loadSamples, resetAll, signOut }: Props) {
+export default function Dashboard({ cards, studyStreak, userName, userAvatar, setView, resetAll, signOut }: Props) {
   const due = getDueCards(cards);
   const weekly = getWeeklyStudied(cards);
   const progress = getProgressPercent(cards);
@@ -123,13 +122,6 @@ export default function Dashboard({ cards, studyStreak, userName, userAvatar, se
 
       {/* Bottom actions */}
       <div className="flex flex-wrap gap-3 justify-center pt-2">
-
-          <button
-            onClick={loadSamples}
-            className="px-5 py-2.5 rounded-xl bg-slate-700 hover:bg-slate-600 text-slate-200 text-sm font-medium transition-colors border border-slate-600"
-          >
-            📦 Load Vocabulary (344 words)
-          </button>
         <button
           onClick={() => { if (confirm("Delete ALL your cards? This cannot be undone.")) resetAll(); }}
           className="px-5 py-2.5 rounded-xl bg-red-500/10 hover:bg-red-500/20 text-red-400 text-sm font-medium transition-colors border border-red-500/20"

@@ -4,9 +4,8 @@ import { User } from "@supabase/supabase-js";
 import { Card, RatingKey, ViewMode } from "./types";
 import { makeCard } from "./storage";
 import { applyReview, getDueCards } from "./srs";
-import { fetchCards, insertCard, insertCards, updateCard as dbUpdateCard, deleteCard as dbDeleteCard, upsertCard } from "./db";
+import { fetchCards, insertCard, updateCard as dbUpdateCard, deleteCard as dbDeleteCard, upsertCard } from "./db";
 import { supabase } from "./supabase";
-import { VOCABULARY } from "./vocabularyData";
 
 export function useAppState() {
   const [user, setUser] = useState<User | null>(null);
@@ -85,16 +84,6 @@ export function useAppState() {
     }
   }, [user, cards, studyStreak, lastStudyDate, saveStreak]);
 
-  const loadVocabulary = useCallback(async () => {
-    if (!user) return;
-    const existingTerms = new Set(cards.map(c => c.term));
-    const toAdd = VOCABULARY.filter(c => !existingTerms.has(c.term));
-    if (!toAdd.length) return;
-    const withIds: Card[] = toAdd.map(c => makeCard(c));
-    setCards(prev => [...prev, ...withIds]);
-    await insertCards(withIds, user.id).catch(console.error);
-  }, [user, cards]);
-
   const resetAll = useCallback(async () => {
     if (!user) return;
     await Promise.all(cards.map(c => dbDeleteCard(c.id, user.id))).catch(console.error);
@@ -114,8 +103,7 @@ export function useAppState() {
     cards, studyStreak, lastStudyDate,
     view, setView,
     editingCard, setEditingCard,
-    addCard, updateCard, deleteCard, reviewCard,
-    loadVocabulary, resetAll, signOut,
+    addCard, updateCard, deleteCard, reviewCard, resetAll, signOut,
     dueCards,
   };
 }

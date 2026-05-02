@@ -23,7 +23,7 @@ export default function Home() {
     view, setView,
     editingCard, setEditingCard,
     addCard, updateCard, deleteCard, reviewCard,
-    loadVocabulary, resetAll, signOut,
+    resetAll, signOut,
     dueCards,
   } = useAppState();
 
@@ -122,7 +122,6 @@ export default function Home() {
               userName={user.user_metadata?.full_name ?? user.email ?? ""}
               userAvatar={user.user_metadata?.avatar_url ?? ""}
               setView={setView}
-              loadSamples={loadVocabulary}
               resetAll={resetAll}
               signOut={signOut}
             />
