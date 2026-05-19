@@ -1,6 +1,8 @@
 "use client";
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { Card, Language, Difficulty, ViewMode } from "@/lib/types";
+import { uploadImage } from "@/lib/uploadImage";
+import { supabase } from "@/lib/supabase";
 
 type FormData = Omit<Card, "id" | "createdAt" | "lastReview" | "nextReview" | "easeFactor" | "interval" | "reviewCount">;
 
@@ -37,6 +39,9 @@ export default function CardForm({ initial, onSave, onCancel, mode }: Props) {
   const [tagInput, setTagInput] = useState("");
   const [imgPreviewError, setImgPreviewError] = useState(false);
   const [errors, setErrors] = useState<Partial<Record<keyof FormData, string>>>({});
+  const [uploading, setUploading] = useState(false);
+  const [uploadError, setUploadError] = useState("");
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const set = <K extends keyof FormData>(key: K, val: FormData[K]) => {
     setForm(f => ({ ...f, [key]: val }));
@@ -49,6 +54,25 @@ export default function CardForm({ initial, onSave, onCancel, mode }: Props) {
     if (!form.translation.trim()) e.translation = "Translation is required";
     if (form.sourceLang === form.targetLang) e.targetLang = "Source and target must differ";
     return e;
+  };
+
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setUploading(true);
+    setUploadError("");
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session?.user) throw new Error("Not logged in");
+      const url = await uploadImage(file, session.user.id);
+      set("imageUrl", url);
+      setImgPreviewError(false);
+    } catch (err) {
+      setUploadError("Upload failed. Try again.");
+      console.error(err);
+    } finally {
+      setUploading(false);
+    }
   };
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -110,22 +134,49 @@ export default function CardForm({ initial, onSave, onCancel, mode }: Props) {
         {/* Image */}
         <div className="rounded-2xl bg-slate-800/60 border border-slate-700/50 p-5 space-y-4">
           <h3 className="text-slate-300 font-semibold text-sm uppercase tracking-wide">Image <span className="text-slate-500 font-normal normal-case">(optional)</span></h3>
-          <Field label="Image URL" error={undefined}>
-            <Input
-              value={form.imageUrl}
-              onChange={v => { set("imageUrl", v); setImgPreviewError(false); }}
-              placeholder="https://example.com/image.jpg"
-            />
-          </Field>
-          {form.imageUrl && (
-            <div className="h-32 rounded-xl overflow-hidden bg-slate-700">
-              {!imgPreviewError ? (
-                <img src={form.imageUrl} alt="preview" className="w-full h-full object-cover" onError={() => setImgPreviewError(true)} />
-              ) : (
-                <div className="w-full h-full flex items-center justify-center text-slate-500 text-sm">Invalid image URL</div>
-              )}
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept="image/*"
+            className="hidden"
+            onChange={handleFileChange}
+          />
+          {form.imageUrl && !imgPreviewError ? (
+            <div className="relative h-40 rounded-xl overflow-hidden bg-slate-700 group">
+              <img src={form.imageUrl} alt="preview" className="w-full h-full object-cover" onError={() => setImgPreviewError(true)} />
+              <button
+                type="button"
+                onClick={() => { set("imageUrl", ""); setImgPreviewError(false); }}
+                className="absolute top-2 right-2 w-7 h-7 rounded-full bg-black/60 text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity hover:bg-red-500"
+              >×</button>
+              <button
+                type="button"
+                onClick={() => fileInputRef.current?.click()}
+                className="absolute bottom-2 right-2 px-3 py-1 rounded-lg bg-black/60 text-white text-xs opacity-0 group-hover:opacity-100 transition-opacity hover:bg-slate-700"
+              >Change</button>
             </div>
+          ) : (
+            <button
+              type="button"
+              onClick={() => fileInputRef.current?.click()}
+              disabled={uploading}
+              className="w-full h-32 rounded-xl border-2 border-dashed border-slate-600 hover:border-violet-500 flex flex-col items-center justify-center gap-2 text-slate-400 hover:text-violet-400 transition-all disabled:opacity-50"
+            >
+              {uploading ? (
+                <>
+                  <div className="w-6 h-6 border-2 border-violet-400 border-t-transparent rounded-full animate-spin" />
+                  <span className="text-sm">Uploading…</span>
+                </>
+              ) : (
+                <>
+                  <span className="text-3xl">🖼️</span>
+                  <span className="text-sm font-medium">Click to upload image</span>
+                  <span className="text-xs text-slate-500">PNG, JPG, WEBP supported</span>
+                </>
+              )}
+            </button>
           )}
+          {uploadError && <p className="text-red-400 text-xs">{uploadError}</p>}
         </div>
 
         {/* Tags & Difficulty */}
