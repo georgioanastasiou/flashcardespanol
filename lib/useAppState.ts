@@ -17,10 +17,12 @@ export function useAppState() {
   const [editingCard, setEditingCard] = useState<Card | null>(null);
 
   useEffect(() => {
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setUser(session?.user ?? null);
-      if (!session?.user) setLoading(false);
-    });
+    supabase.auth.getSession()
+      .then(({ data: { session } }) => {
+        setUser(session?.user ?? null);
+        if (!session?.user) setLoading(false);
+      })
+      .catch(() => setLoading(false));
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       setUser(session?.user ?? null);
       if (!session?.user) { setCards([]); setLoading(false); }
