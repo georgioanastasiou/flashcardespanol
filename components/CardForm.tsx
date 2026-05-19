@@ -68,7 +68,8 @@ export default function CardForm({ initial, onSave, onCancel, mode }: Props) {
       set("imageUrl", url);
       setImgPreviewError(false);
     } catch (err) {
-      setUploadError("Upload failed. Try again.");
+      const msg = err instanceof Error ? err.message : String(err);
+      setUploadError(msg);
       console.error(err);
     } finally {
       setUploading(false);
