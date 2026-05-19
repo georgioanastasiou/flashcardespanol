@@ -103,6 +103,7 @@ export default function StudyMode({ dueCards, reviewCard, setView }: Props) {
 
       {/* Card */}
       <div
+        key={index}
         className="cursor-pointer select-none"
         style={{ perspective: "1200px" }}
         onClick={flip}
