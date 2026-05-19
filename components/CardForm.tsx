@@ -41,6 +41,7 @@ export default function CardForm({ initial, onSave, onCancel, mode }: Props) {
   const [errors, setErrors] = useState<Partial<Record<keyof FormData, string>>>({});
   const [uploading, setUploading] = useState(false);
   const [uploadError, setUploadError] = useState("");
+  const [dragging, setDragging] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const set = <K extends keyof FormData>(key: K, val: FormData[K]) => {
@@ -56,9 +57,8 @@ export default function CardForm({ initial, onSave, onCancel, mode }: Props) {
     return e;
   };
 
-  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
+  const uploadFile = async (file: File) => {
+    if (!file.type.startsWith("image/")) { setUploadError("Only image files are supported."); return; }
     setUploading(true);
     setUploadError("");
     try {
@@ -73,6 +73,18 @@ export default function CardForm({ initial, onSave, onCancel, mode }: Props) {
     } finally {
       setUploading(false);
     }
+  };
+
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) await uploadFile(file);
+  };
+
+  const handleDrop = async (e: React.DragEvent) => {
+    e.preventDefault();
+    setDragging(false);
+    const file = e.dataTransfer.files?.[0];
+    if (file) await uploadFile(file);
   };
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -156,25 +168,34 @@ export default function CardForm({ initial, onSave, onCancel, mode }: Props) {
               >Change</button>
             </div>
           ) : (
-            <button
-              type="button"
+            <div
+              onDragOver={e => { e.preventDefault(); setDragging(true); }}
+              onDragLeave={() => setDragging(false)}
+              onDrop={handleDrop}
               onClick={() => fileInputRef.current?.click()}
-              disabled={uploading}
-              className="w-full h-32 rounded-xl border-2 border-dashed border-slate-600 hover:border-violet-500 flex flex-col items-center justify-center gap-2 text-slate-400 hover:text-violet-400 transition-all disabled:opacity-50"
+              className={`w-full h-36 rounded-xl border-2 border-dashed flex flex-col items-center justify-center gap-2 cursor-pointer transition-all
+                ${dragging ? "border-violet-400 bg-violet-500/10 text-violet-300 scale-[1.01]" : "border-slate-600 hover:border-violet-500 text-slate-400 hover:text-violet-400"}
+                ${uploading ? "opacity-50 pointer-events-none" : ""}
+              `}
             >
               {uploading ? (
                 <>
                   <div className="w-6 h-6 border-2 border-violet-400 border-t-transparent rounded-full animate-spin" />
                   <span className="text-sm">Uploading…</span>
                 </>
+              ) : dragging ? (
+                <>
+                  <span className="text-3xl">📥</span>
+                  <span className="text-sm font-medium">Drop it!</span>
+                </>
               ) : (
                 <>
                   <span className="text-3xl">🖼️</span>
-                  <span className="text-sm font-medium">Click to upload image</span>
+                  <span className="text-sm font-medium">Click or drag &amp; drop an image</span>
                   <span className="text-xs text-slate-500">PNG, JPG, WEBP supported</span>
                 </>
               )}
-            </button>
+            </div>
           )}
           {uploadError && <p className="text-red-400 text-xs">{uploadError}</p>}
         </div>
