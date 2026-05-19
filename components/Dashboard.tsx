@@ -1,4 +1,5 @@
 "use client";
+import Image from "next/image";
 import { Card, ViewMode } from "@/lib/types";
 import { getDueCards, getWeeklyStudied, getProgressPercent } from "@/lib/srs";
 
@@ -30,7 +31,7 @@ export default function Dashboard({ cards, studyStreak, userName, userAvatar, se
       {/* Hero */}
       <div className="text-center py-8">
         {userAvatar
-          ? <img src={userAvatar} alt="avatar" className="w-16 h-16 rounded-full border-2 border-violet-500/50 mx-auto mb-3" />
+          ? <Image src={userAvatar} alt="avatar" width={64} height={64} className="rounded-full border-2 border-violet-500/50 mx-auto mb-3" />
           : <div className="text-6xl mb-3">🧠</div>
         }
         <h1 className="text-4xl font-bold bg-gradient-to-r from-violet-400 to-cyan-400 bg-clip-text text-transparent">

@@ -30,15 +30,22 @@ export function useAppState() {
 
   useEffect(() => {
     if (!user) return;
-    setLoading(true);
-    fetchCards(user.id)
-      .then(setCards)
-      .catch(console.error)
-      .finally(() => setLoading(false));
-    const streak = parseInt(localStorage.getItem(`streak_${user.id}`) ?? "0");
-    const lastDate = localStorage.getItem(`lastStudy_${user.id}`) ?? null;
-    setStudyStreak(streak);
-    setLastStudyDate(lastDate);
+    const load = async () => {
+      const streak = parseInt(localStorage.getItem(`streak_${user.id}`) ?? "0");
+      const lastDate = localStorage.getItem(`lastStudy_${user.id}`) ?? null;
+      setStudyStreak(streak);
+      setLastStudyDate(lastDate);
+      setLoading(true);
+      try {
+        const data = await fetchCards(user.id);
+        setCards(data);
+      } catch (e) {
+        console.error(e);
+      } finally {
+        setLoading(false);
+      }
+    };
+    load();
   }, [user]);
 
   const saveStreak = useCallback((streak: number, date: string | null, uid: string) => {
