@@ -13,7 +13,7 @@ export default function StudyMode({ dueCards, reviewCard, setView }: Props) {
   const [index, setIndex] = useState(0);
   const [flipped, setFlipped] = useState(false);
   const [rated, setRated] = useState(false);
-  const [sessionCards] = useState<Card[]>(() => [...dueCards]);
+  const [sessionCards] = useState<Card[]>(() => [...dueCards].sort(() => Math.random() - 0.5));
   const [sessionDone, setSessionDone] = useState(false);
   const [imgError, setImgError] = useState(false);
 
